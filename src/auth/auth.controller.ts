@@ -32,13 +32,18 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout(@Request() req: any) {
+  logout(@Request() req: { user: { userId: number } }) {
     return this.authService.logout(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@Request() req: any) {
+  getMe(
+    @Request()
+    req: {
+      user: { userId: number; username: string; email: string };
+    },
+  ) {
     return req.user;
   }
 }

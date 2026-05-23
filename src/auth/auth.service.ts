@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import type { StringValue } from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -55,7 +56,10 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
+      const payload = await this.jwtService.verifyAsync<{
+        sub: number;
+        email: string;
+      }>(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET,
       });
 
@@ -90,14 +94,23 @@ export class AuthService {
   private async generateTokens(userId: number, email: string) {
     const payload = { sub: userId, email };
 
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    const accessExpiresIn = (process.env.JWT_ACCESS_EXPIRES_IN ?? '15m') as StringValue;
+    const refreshExpiresIn = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as StringValue;
+
+    if (!accessSecret || !refreshSecret) {
+      throw new Error('JWT secrets are not configured');
+    }
+
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+        secret: accessSecret,
+        expiresIn: accessExpiresIn,
       }),
       this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_REFRESH_SECRET,
-        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+        secret: refreshSecret,
+        expiresIn: refreshExpiresIn,
       }),
     ]);
 

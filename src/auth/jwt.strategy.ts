@@ -5,14 +5,20 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) {
+      throw new Error('JWT_ACCESS_SECRET is not defined');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_ACCESS_SECRET,
+      secretOrKey: secret,
     });
   }
 
-  async validate(payload: any) {
-    return { userId: payload.sub, email: payload.email };
+  validate(payload: { sub: number; email: string }) {
+    const { sub, email } = payload;
+    return { userId: sub, email };
   }
 }
