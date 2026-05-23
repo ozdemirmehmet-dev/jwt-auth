@@ -10,8 +10,8 @@ import { JwtStrategy } from './jwt.strategy';
     PrismaModule,
     JwtModule.register({
       global: true,
-      secret: 'super-secret-key',
-      signOptions: { expiresIn: '1d' },
+      secret: process.env.JWT_ACCESS_SECRET,
+      signOptions: { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m' },
     }),
   ],
   controllers: [AuthController],
